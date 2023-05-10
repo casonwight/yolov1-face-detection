@@ -15,6 +15,11 @@ class Trainer:
             "batch_size": 32,
             "n_epochs": 16,
             "val_every": 32,
+            "lr": 0.001,
+            "momentum": 0.9,
+            "weight_decay": 0.0005,
+            "scheduler_step_size": 1,
+            "scheduler_gamma": 0.1,
         }
 
         self.__dict__.update(kwargs)
@@ -23,8 +28,8 @@ class Trainer:
             self.model = YoloV1Model()
 
         self.model = self.model.to(self.device)
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0005)
-        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=1, gamma=0.1)
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.scheduler_step_size, gamma=self.scheduler_gamma)
         self.criterion = YoloV1Loss()
 
         self.train_loader, self.val_loader = get_data_loaders(self.data_root, batch_size=self.batch_size)
