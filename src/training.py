@@ -34,7 +34,7 @@ class Trainer:
 
         self.train_loader, self.val_loader = get_data_loaders(self.data_root, batch_size=self.batch_size)
 
-        self.results = pd.DataFrame(columns=["i", "epoch", "batch", "acc_box", "acc_no_box", "loss", "source"])
+        self.results = pd.DataFrame(columns=["i", "epoch", "batch", "acc_box", "acc_no_box", "acc_overall", "loss", "source"])
 
     def train(self):
         for epoch in range(self.n_epochs):
@@ -59,15 +59,17 @@ class Trainer:
                 no_box_mask = torch.logical_not(box_mask)
                 acc_no_box = 100*(torch.round(outputs[no_box_mask]) == labels[no_box_mask]).float().mean().item()
                 acc_box = 100*(torch.round(outputs[box_mask]) == labels[box_mask]).float().mean().item()
+                overall_acc = 100*(torch.round(outputs) == labels).float().mean().item()
 
                 # Update progress bar (and results dataframe)
-                pbar.set_description(f"Epoch {epoch} | Batch: {i} | Loss: {loss.item():.2f} | Acc (box): {acc_box.item():.0f}% | Acc (no box): {acc_no_box.item():.0f}%")
+                pbar.set_description(f"Epoch {epoch} | Batch: {i} | Loss: {loss.item():.2f} | Acc (box): {acc_box:.0f}% | Acc (no box): {acc_no_box:.0f}% | Acc (overall): {overall_acc:.0f}%")
                 self.results = pd.concat([self.results, pd.DataFrame({
                     "i": [i],
                     "epoch": [epoch],
                     "batch": [i],
                     "acc_box": [acc_box],
                     "acc_no_box": [acc_no_box],
+                    "acc_overall": [overall_acc],
                     "loss": [loss.item()],
                     "source": ["train"],
                 })], ignore_index=True)
@@ -83,6 +85,7 @@ class Trainer:
                     no_box_mask_val = torch.logical_not(box_mask_val)
                     acc_no_box_val = 100*(torch.round(outputs[no_box_mask_val]) == labels[no_box_mask_val]).float().mean().item()
                     acc_box_val = 100*(torch.round(outputs[box_mask_val]) == labels[box_mask_val]).float().mean().item()
+                    overall_acc_val = 100*(torch.round(outputs) == labels).float().mean().item()
                     
                     self.results = pd.concat([self.results, pd.DataFrame({
                         "i": [i],
@@ -90,6 +93,7 @@ class Trainer:
                         "batch": [i],
                         "acc_box": [acc_box_val],
                         "acc_no_box": [acc_no_box_val],
+                        "acc_overall": [overall_acc],
                         "loss": [loss_val.item()],
                         "source": ["val"],
                     })], ignore_index=True)
