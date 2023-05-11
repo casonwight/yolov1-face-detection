@@ -64,7 +64,7 @@ def get_data_loaders(root="data/", batch_size=32):
 
 
 def show_images(images, all_boxes):
-    images = (images.permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)
+    images = (images.cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)
 
     for image, boxes in zip(images, all_boxes):
         for grid_row in range(boxes.shape[0]):

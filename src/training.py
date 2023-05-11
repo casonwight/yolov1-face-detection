@@ -107,7 +107,7 @@ class Trainer:
                         "source": ["val"],
                     })], ignore_index=True)
                     
-                    show_images(images, pred_labels_val)
+                    show_images(images.detach().cpu(), pred_labels_val.detach().cpu())
                 
                 i += 1
 
