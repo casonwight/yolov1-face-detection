@@ -83,16 +83,16 @@ class Trainer:
 
                 # Validate
                 if i % self.val_every == 0:
-                    images_val, labels_val = next(iter(self.val_loader))
-                    images_val, labels_val = images_val.to(self.device), labels_val.to(self.device)
-                    outputs_val = self.model(images_val)
-                    loss_val = self.criterion(outputs_val, labels_val)
+                    images_val, act_labels_val = next(iter(self.val_loader))
+                    images_val, act_labels_val = images_val.to(self.device), act_labels_val.to(self.device)
+                    pred_labels_val = self.model(images_val)
+                    loss_val = self.criterion(pred_labels_val, act_labels_val)
                    
-                    box_mask_val = labels[:, :, :, 4] == 1
+                    box_mask_val = act_labels_val[:, :, :, 4] == 1
                     no_box_mask_val = torch.logical_not(box_mask_val)
-                    acc_no_box_val = 100*(torch.round(outputs[no_box_mask_val]) == labels[no_box_mask_val]).float().mean().item()
-                    acc_box_val = 100*(torch.round(outputs[box_mask_val]) == labels[box_mask_val]).float().mean().item()
-                    overall_acc_val = 100*(torch.round(outputs) == labels).float().mean().item()
+                    acc_no_box_val = 100*(torch.round(pred_labels_val[no_box_mask_val]) == act_labels_val[no_box_mask_val]).float().mean().item()
+                    acc_box_val = 100*(torch.round(pred_labels_val[box_mask_val]) == act_labels_val[box_mask_val]).float().mean().item()
+                    overall_acc_val = 100*(torch.round(pred_labels_val) == act_labels_val).float().mean().item()
                     
                     self.results = pd.concat([self.results, pd.DataFrame({
                         "i": [i],
