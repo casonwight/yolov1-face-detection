@@ -39,11 +39,12 @@ class Trainer:
         self.results = pd.DataFrame(columns=["i", "epoch", "batch", "acc_box", "acc_no_box", "acc_overall", "loss", "source"])
 
     def train(self):
+        i = 0
         for epoch in range(self.n_epochs):
-            pbar = tqdm(enumerate(self.train_loader))
+            pbar = tqdm(self.train_loader)
             pbar.set_description(f"Epoch {epoch}")
 
-            for i, (images, act_labels) in pbar:
+            for images, act_labels in pbar:
                 # Reset gradients
                 self.optimizer.zero_grad()
 
@@ -80,6 +81,7 @@ class Trainer:
                     "loss": [loss.item()],
                     "source": ["train"],
                 })], ignore_index=True)
+                
 
                 # Validate
                 if i % self.val_every == 0:
@@ -104,6 +106,8 @@ class Trainer:
                         "loss": [loss_val.item()],
                         "source": ["val"],
                     })], ignore_index=True)
+                
+                i += 1
 
 
             self.scheduler.step()
