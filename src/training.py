@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from model import YoloV1Model
 from loss import YoloV1Loss
-from data_utils import get_data_loaders
+from data_utils import get_data_loaders, show_images
 
 class Trainer:
     def __init__(self, **kwargs):
@@ -106,6 +106,8 @@ class Trainer:
                         "loss": [loss_val.item()],
                         "source": ["val"],
                     })], ignore_index=True)
+                    
+                    show_images(images, pred_labels_val)
                 
                 i += 1
 
