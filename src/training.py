@@ -19,11 +19,13 @@ class Trainer:
             "momentum": 0.9,
             "weight_decay": 0.0005,
             "scheduler_step_size": 1,
-            "scheduler_gamma": 0.1,
+            "scheduler_gamma": 0.1
         }
 
         self.__dict__.update(kwargs)
-        
+
+        print("Training on device:", self.device)
+
         if self.model is None:
             self.model = YoloV1Model()
 
