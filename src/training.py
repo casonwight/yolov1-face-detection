@@ -43,25 +43,30 @@ class Trainer:
             pbar = tqdm(enumerate(self.train_loader))
             pbar.set_description(f"Epoch {epoch}")
 
-            for i, (images, labels) in pbar:
+            for i, (images, act_labels) in pbar:
                 # Reset gradients
                 self.optimizer.zero_grad()
 
                 # Forward pass
-                images, labels = images.to(self.device), labels.to(self.device)
-                outputs = self.model(images)
-                loss = self.criterion(outputs, labels)
+                images, act_labels = images.to(self.device), act_labels.to(self.device)
+                pred_labels = self.model(images)
+                loss = self.criterion(pred_labels, act_labels)
 
                 # Backward pass
                 loss.backward()
                 self.optimizer.step()
 
                 # Calculate accuracy in places there are not actual boxes
-                box_mask = labels[:, :, :, 4] == 1
+                box_mask = act_labels[:, :, :, 4] == 1
                 no_box_mask = torch.logical_not(box_mask)
-                acc_no_box = 100*(torch.round(outputs[no_box_mask]) == labels[no_box_mask]).float().mean().item()
-                acc_box = 100*(torch.round(outputs[box_mask]) == labels[box_mask]).float().mean().item()
-                overall_acc = 100*(torch.round(outputs) == labels).float().mean().item()
+                acc_no_box = 100*(torch.round(pred_labels[no_box_mask]) == act_labels[no_box_mask]).float().mean().item()
+                acc_box = 100*(torch.round(pred_labels[box_mask]) == act_labels[box_mask]).float().mean().item()
+                overall_acc = 100*(torch.round(pred_labels) == act_labels).float().mean().item()
+                
+                loss.cpu()
+                images.cpu()
+                pred_labels.cpu()
+                act_labels.cpu()
 
                 # Update progress bar (and results dataframe)
                 pbar.set_description(f"Epoch {epoch} | Batch: {i} | Loss: {loss.item():.2f} | Acc (box): {acc_box:.0f}% | Acc (no box): {acc_no_box:.0f}% | Acc (overall): {overall_acc:.0f}%")

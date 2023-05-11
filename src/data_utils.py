@@ -30,6 +30,8 @@ class WiderFaceDataset:
         # For each box, getting which grid cell it belongs to
         grid_x = torch.floor(bboxes_list[:, 0] * 7 / w).to(torch.int64)
         grid_y = torch.floor(bboxes_list[:, 1] * 7 / h).to(torch.int64)
+        grid_x = torch.clamp(grid_x, min=0, max=6)
+        grid_y = torch.clamp(grid_y, min=0, max=6)
         grid_cells = torch.stack((grid_x, grid_y), dim=1)
 
         # Removing bounding boxes if there is more than one bounding box in a grid cell
