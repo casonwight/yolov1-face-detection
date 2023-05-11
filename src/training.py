@@ -69,7 +69,7 @@ class Trainer:
                 act_labels.cpu()
 
                 # Update progress bar (and results dataframe)
-                pbar.set_description(f"Epoch {epoch} | Batch: {i} | Loss: {loss.item():.2f} | Acc (box): {acc_box:.0f}% | Acc (no box): {acc_no_box:.0f}% | Acc (overall): {overall_acc:.0f}%")
+                pbar.set_description(f"Epoch {epoch+1}/{self.n_epochs} | Batch: {i+1}/{len(self.train_loader)} | Loss: {loss.item():.2f} | Acc (box): {acc_box:.0f}% | Acc (no box): {acc_no_box:.0f}% | Acc (overall): {overall_acc:.0f}%")
                 self.results = pd.concat([self.results, pd.DataFrame({
                     "i": [i],
                     "epoch": [epoch],
@@ -107,7 +107,6 @@ class Trainer:
 
 
             self.scheduler.step()
-            self.validate(epoch)
 
     def plot_results(self):
         # Vertically stacked loss and accuracy plots
