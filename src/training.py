@@ -93,7 +93,7 @@ class Trainer:
                         "batch": [i],
                         "acc_box": [acc_box_val],
                         "acc_no_box": [acc_no_box_val],
-                        "acc_overall": [overall_acc],
+                        "acc_overall": [overall_acc_val],
                         "loss": [loss_val.item()],
                         "source": ["val"],
                     })], ignore_index=True)
