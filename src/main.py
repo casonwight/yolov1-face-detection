@@ -13,6 +13,8 @@ def main():
     parser.add_argument("--scheduler_step_size", type=int, default=1)
     parser.add_argument("--scheduler_gamma", type=float, default=.1)
     parser.add_argument("--val_every", type=int, default=32)
+    parser.add_argument("--save_every", type=int, default=32)
+    parser.add_argument("--show_every", type=int, default=32)
     parser.add_argument("--data_root", type=str, default="data/")
     args = parser.parse_args()
 

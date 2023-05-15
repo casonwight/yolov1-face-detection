@@ -19,6 +19,7 @@ class Trainer:
             "n_epochs": 16,
             "val_every": 32,
             "save_every": 32,
+            "show_every": 32,
             "lr": 0.001,
             "momentum": 0.9,
             "weight_decay": 0.0005,
@@ -114,7 +115,8 @@ class Trainer:
                         "loss": [loss_val.item()],
                         "source": ["val"],
                     })], ignore_index=True)
-                    
+
+                if i % self.show_every == 0:    
                     show_images(images.detach().cpu(), pred_labels_val.detach().cpu())
                 
                 # Save model using torch.jit and results dataframe
