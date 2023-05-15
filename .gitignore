@@ -1,3 +1,7 @@
 /data/*
 /models/*
 /results/*
+
+!/data/.gitkeep
+!/models/.gitkeep
+!/results/.gitkeep
