@@ -117,10 +117,10 @@ class Trainer:
     def plot_results(self):
         # Vertically stacked loss and accuracy plots
         fig, axs = plt.subplots(2, 1, figsize=(10, 10))
-        axs[0].plot(self.results.query("source == 'train'")["i"], self.query("source == 'train'")["loss"], label="Train")
-        axs[0].plot(self.results.query("source == 'val'")["i"], self.query("source == 'val'")["loss"], label="Validation")
-        axs[1].plot(self.results.query("source == 'train'")["i"], self.query("source == 'train'")["acc"], label="Train")
-        axs[1].plot(self.results.query("source == 'val'")["i"], self.query("source == 'val'")["acc"], label="Validation")
+        axs[0].plot(self.results.query("source == 'train'")["i"], self.results.query("source == 'train'")["loss"], label="Train")
+        axs[0].plot(self.results.query("source == 'val'")["i"], self.results.query("source == 'val'")["loss"], label="Validation")
+        axs[1].plot(self.results.query("source == 'train'")["i"], self.results.query("source == 'train'")["acc"], label="Train")
+        axs[1].plot(self.results.query("source == 'val'")["i"], self.results.query("source == 'val'")["acc"], label="Validation")
 
         axs[0].set_title("Loss")
         axs[1].set_title("Accuracy")
