@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from model import YoloV1Model
 from loss import YoloV1Loss
 from data_utils import get_data_loaders, show_images
+from datetime import date
 
 class Trainer:
     def __init__(self, **kwargs):
@@ -12,9 +13,12 @@ class Trainer:
             "device": torch.device("cuda" if torch.cuda.is_available() else "cpu"),
             "model": None,
             "data_root": "data/",
+            "model_root": "models/",
+            "results_root": "results/",
             "batch_size": 32,
             "n_epochs": 16,
             "val_every": 32,
+            "save_every": 32,
             "lr": 0.001,
             "momentum": 0.9,
             "weight_decay": 0.0005,
@@ -37,6 +41,10 @@ class Trainer:
         self.train_loader, self.val_loader = get_data_loaders(self.data_root, batch_size=self.batch_size)
 
         self.results = pd.DataFrame(columns=["i", "epoch", "batch", "acc_box", "acc_no_box", "acc_overall", "loss", "source"])
+
+        self.model_path = f"{self.model_root}/yolov1_faces_model_{date.today()}.pt"
+        self.results_path = f"{self.results_root}/yolov1_faces_results_{date.today()}.csv"
+
 
     def train(self):
         i = 0
@@ -109,18 +117,33 @@ class Trainer:
                     
                     show_images(images.detach().cpu(), pred_labels_val.detach().cpu())
                 
+                # Save model using torch.jit and results dataframe
+                if i % self.save_every == 0:
+                    torch.jit.save(torch.jit.script(self.model), self.model_path)
+                    self.results.to_csv(self.results_path, index=False)
+
                 i += 1
 
 
             self.scheduler.step()
+        
+        # Save final model
+        torch.jit.save(torch.jit.script(self.model), self.model_path)
+
+        # Save results
+        self.results.to_csv(self.results_path, index=False)
 
     def plot_results(self):
         # Vertically stacked loss and accuracy plots
         fig, axs = plt.subplots(2, 1, figsize=(10, 10))
         axs[0].plot(self.results.query("source == 'train'")["i"], self.results.query("source == 'train'")["loss"], label="Train")
         axs[0].plot(self.results.query("source == 'val'")["i"], self.results.query("source == 'val'")["loss"], label="Validation")
-        axs[1].plot(self.results.query("source == 'train'")["i"], self.results.query("source == 'train'")["acc"], label="Train")
-        axs[1].plot(self.results.query("source == 'val'")["i"], self.results.query("source == 'val'")["acc"], label="Validation")
+        axs[1].plot(self.results.query("source == 'train'")["i"], self.results.query("source == 'train'")["acc_box"], label="Train (Box)")
+        axs[1].plot(self.results.query("source == 'val'")["i"], self.results.query("source == 'val'")["acc_box"], label="Validation (Box)")
+        axs[1].plot(self.results.query("source == 'train'")["i"], self.results.query("source == 'train'")["acc_no_box"], label="Train (Box)")
+        axs[1].plot(self.results.query("source == 'val'")["i"], self.results.query("source == 'val'")["acc_no_box"], label="Validation (Box)")
+        axs[1].plot(self.results.query("source == 'train'")["i"], self.results.query("source == 'train'")["acc_overall"], label="Train (Box)")
+        axs[1].plot(self.results.query("source == 'val'")["i"], self.results.query("source == 'val'")["acc_overall"], label="Validation (Box)")
 
         axs[0].set_title("Loss")
         axs[1].set_title("Accuracy")
@@ -144,3 +167,6 @@ if __name__ == "__main__":
     trainer = Trainer(n_epochs=1)
     trainer.train()
     trainer.plot_results()
+
+    # load model
+    model = torch.jit.load(trainer.model_path)
