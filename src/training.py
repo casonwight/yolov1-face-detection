@@ -116,7 +116,7 @@ class Trainer:
                         "source": ["val"],
                     })], ignore_index=True)
 
-                if i % self.show_every == 0:    
+                if i % self.show_every == 0 and self.show_every > 0:    
                     show_images(images.detach().cpu(), pred_labels_val.detach().cpu())
                 
                 # Save model using torch.jit and results dataframe
