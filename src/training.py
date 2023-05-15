@@ -120,6 +120,7 @@ class Trainer:
                 # Save model using torch.jit and results dataframe
                 if i % self.save_every == 0:
                     torch.jit.save(torch.jit.script(self.model.cpu()), self.model_path)
+                    self.model.to(self.device)
                     self.results.to_csv(self.results_path, index=False)
 
                 i += 1
