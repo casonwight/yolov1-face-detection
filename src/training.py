@@ -36,7 +36,7 @@ class Trainer:
         print("Training on device:", self.device)
 
         if self.model is not None:
-            print("Loading exxisting model.")
+            print("Loading existing model.")
             self.model = torch.jit.load(self.model)
         else:
             self.model = YoloV1Model()
