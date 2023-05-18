@@ -95,6 +95,8 @@ class Trainer:
                     "source": ["train"],
                 })], ignore_index=True)
                 
+                torch.cuda.empty_cache()
+
                 # Validate
                 if i % self.val_every == 0:
                     images_val, act_labels_val = next(iter(self.val_loader))
@@ -118,6 +120,7 @@ class Trainer:
                         "loss": [loss_val.item()],
                         "source": ["val"],
                     })], ignore_index=True)
+                    torch.cuda.empty_cache()
 
                 if i % self.show_every == 0 and self.show_every > 0:    
                     show_images(images.detach().cpu(), pred_labels_val.detach().cpu())
