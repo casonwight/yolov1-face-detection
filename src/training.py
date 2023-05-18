@@ -15,6 +15,8 @@ class Trainer:
             "data_root": "data/",
             "model_root": "models/",
             "results_root": "results/",
+            "lambda_coord": 5,
+            "lambda_noobj": 0.5,
             "batch_size": 32,
             "n_epochs": 16,
             "val_every": 32,
@@ -31,13 +33,15 @@ class Trainer:
 
         print("Training on device:", self.device)
 
-        if self.model is None:
+        if self.model is not None:
+            self.model = torch.jit.load(self.model)
+        else:
             self.model = YoloV1Model()
 
         self.model = self.model.to(self.device)
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.scheduler_step_size, gamma=self.scheduler_gamma)
-        self.criterion = YoloV1Loss()
+        self.criterion = YoloV1Loss(lambda_coord=self.lambda_coord, lambda_noobj=self.lambda_noobj)
 
         self.train_loader, self.val_loader = get_data_loaders(self.data_root, batch_size=self.batch_size)
 
@@ -52,7 +56,7 @@ class Trainer:
         for epoch in range(self.n_epochs):
             pbar = tqdm(self.train_loader)
             pbar.set_description(f"Epoch {epoch}")
-
+            batch = 0
             for images, act_labels in pbar:
                 # Reset gradients
                 self.optimizer.zero_grad()
@@ -79,7 +83,7 @@ class Trainer:
                 act_labels.cpu()
 
                 # Update progress bar (and results dataframe)
-                pbar.set_description(f"Epoch {epoch+1}/{self.n_epochs} | Batch: {i+1}/{len(self.train_loader)} | Loss: {loss.item():.2f} | Acc (box): {acc_box:.0f}% | Acc (no box): {acc_no_box:.0f}% | Acc (overall): {overall_acc:.0f}%")
+                pbar.set_description(f"Epoch {epoch+1}/{self.n_epochs} | Batch: {batch+1}/{len(self.train_loader)} | Loss: {loss.item():.2f} | Acc (box): {acc_box:.0f}% | Acc (no box): {acc_no_box:.0f}% | Acc (overall): {overall_acc:.0f}%")
                 self.results = pd.concat([self.results, pd.DataFrame({
                     "i": [i],
                     "epoch": [epoch],
@@ -91,7 +95,6 @@ class Trainer:
                     "source": ["train"],
                 })], ignore_index=True)
                 
-
                 # Validate
                 if i % self.val_every == 0:
                     images_val, act_labels_val = next(iter(self.val_loader))
@@ -126,6 +129,7 @@ class Trainer:
                     self.results.to_csv(self.results_path, index=False)
 
                 i += 1
+                batch += 1
 
 
             self.scheduler.step()

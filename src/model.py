@@ -33,7 +33,9 @@ class YoloV1Model(torch.nn.Module):
         x = x.view(x.shape[0], -1)
         x = self.fc1(x) 
         x = self.fc2(x) 
-        return x.view(x.shape[0], 7, 7, 5)
+        x = x.view(x.shape[0], 7, 7, 5)
+        x = torch.sigmoid(x)
+        return x
         
 
 if __name__=="__main__":

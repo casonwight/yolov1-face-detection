@@ -3,11 +3,12 @@ import torch.nn.functional as F
 
 
 class YoloV1Loss(torch.nn.Module): 
-    def __init__(self): 
+    def __init__(self, **kwargs): 
         super().__init__() 
         self.lambda_coord = 5 
         self.lambda_noobj = 0.5         
-    
+        self.__dict__.update(kwargs)
+
     def forward(self, outputs, targets):
         """
         Arguments:

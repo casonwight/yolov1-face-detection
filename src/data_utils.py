@@ -96,3 +96,19 @@ if __name__=="__main__":
 
     # Show images
     show_images(images, labels)
+
+
+if __name__ == "__main__":
+    # set seed
+    torch.manual_seed(0)
+    
+    wider_train_loader, wider_val_loader = get_data_loaders(batch_size=4)
+    print(len(wider_train_loader), len(wider_val_loader))
+
+    # Extract single batch of training data using next(iter(...))
+    images, labels = next(iter(wider_train_loader))
+    print(images.shape, labels.shape)
+    print(images[0])
+
+    # Show images
+    show_images(images, labels)
