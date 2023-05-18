@@ -6,6 +6,8 @@ from model import YoloV1Model
 from loss import YoloV1Loss
 from data_utils import get_data_loaders, show_images
 from datetime import date
+import gc
+
 
 class Trainer:
     def __init__(self, **kwargs):
@@ -94,7 +96,7 @@ class Trainer:
                     "loss": [loss.item()],
                     "source": ["train"],
                 })], ignore_index=True)
-                
+                gc.collect()
                 torch.cuda.empty_cache()
 
                 # Validate
@@ -120,6 +122,7 @@ class Trainer:
                         "loss": [loss_val.item()],
                         "source": ["val"],
                     })], ignore_index=True)
+                    gc.collect()
                     torch.cuda.empty_cache()
 
                 if i % self.show_every == 0 and self.show_every > 0:    
