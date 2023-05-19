@@ -5,8 +5,9 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--use_dml", action="store_true")
     parser.add_argument("--n_epochs", type=int, default=16)
-    parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--momentum", type=float, default=.9)
     parser.add_argument("--weight_decay", type=float, default=5e-4)

@@ -7,11 +7,13 @@ from loss import YoloV1Loss
 from data_utils import get_data_loaders, show_images
 from datetime import date
 import gc
+import torch
 
 
 class Trainer:
     def __init__(self, **kwargs):
         self.__dict__ = {
+            "use_dml": False,
             "device": torch.device("cuda" if torch.cuda.is_available() else "cpu"),
             "model": None,
             "data_root": "data/",
@@ -19,7 +21,7 @@ class Trainer:
             "results_root": "results/",
             "lambda_coord": 5,
             "lambda_noobj": 0.5,
-            "batch_size": 32,
+            "batch_size": 16,
             "n_epochs": 16,
             "val_every": 32,
             "save_every": 32,
@@ -32,6 +34,10 @@ class Trainer:
         }
 
         self.__dict__.update(kwargs)
+
+        if self.use_dml:
+            import torch_directml
+            self.device = torch_directml.device()
 
         print("Training on device:", self.device)
 
@@ -67,23 +73,24 @@ class Trainer:
                 # Forward pass
                 images, act_labels = images.to(self.device), act_labels.to(self.device)
                 pred_labels = self.model(images)
+                del images
+                gc.collect()
+
                 loss = self.criterion(pred_labels, act_labels)
 
                 # Backward pass
                 loss.backward()
                 self.optimizer.step()
 
+                # Move to cpu for metrics
+                act_labels = act_labels.cpu()
+                pred_labels = pred_labels.cpu()
+
                 # Calculate accuracy in places there are not actual boxes
                 box_mask = act_labels[:, :, :, 4] == 1
-                no_box_mask = torch.logical_not(box_mask)
-                acc_no_box = 100*(torch.round(pred_labels[no_box_mask]) == act_labels[no_box_mask]).float().mean().item()
+                acc_no_box = 100*(torch.round(pred_labels[~box_mask]) == act_labels[~box_mask]).float().mean().item()
                 acc_box = 100*(torch.round(pred_labels[box_mask]) == act_labels[box_mask]).float().mean().item()
                 overall_acc = 100*(torch.round(pred_labels) == act_labels).float().mean().item()
-                
-                loss.cpu()
-                images.cpu()
-                pred_labels.cpu()
-                act_labels.cpu()
 
                 # Update progress bar (and results dataframe)
                 pbar.set_description(f"Epoch {epoch+1}/{self.n_epochs} | Batch: {batch+1}/{len(self.train_loader)} | Loss: {loss.item():.2f} | Acc (box): {acc_box:.0f}% | Acc (no box): {acc_no_box:.0f}% | Acc (overall): {overall_acc:.0f}%")
@@ -97,6 +104,16 @@ class Trainer:
                     "loss": [loss.item()],
                     "source": ["train"],
                 })], ignore_index=True)
+                
+                # Delete variables to free up memory
+                del act_labels
+                del pred_labels
+                del loss
+                del box_mask
+                del acc_no_box
+                del acc_box
+                del overall_acc
+
                 gc.collect()
                 torch.cuda.empty_cache()
 
@@ -105,11 +122,16 @@ class Trainer:
                     images_val, act_labels_val = next(iter(self.val_loader))
                     images_val, act_labels_val = images_val.to(self.device), act_labels_val.to(self.device)
                     pred_labels_val = self.model(images_val)
+                    del images_val
+                    gc.collect()
                     loss_val = self.criterion(pred_labels_val, act_labels_val)
+
+                    # Move to cpu for metrics
+                    act_labels_val = act_labels_val.cpu()
+                    pred_labels_val = pred_labels_val.cpu()
                    
                     box_mask_val = act_labels_val[:, :, :, 4] == 1
-                    no_box_mask_val = torch.logical_not(box_mask_val)
-                    acc_no_box_val = 100*(torch.round(pred_labels_val[no_box_mask_val]) == act_labels_val[no_box_mask_val]).float().mean().item()
+                    acc_no_box_val = 100*(torch.round(pred_labels_val[~box_mask_val]) == act_labels_val[~box_mask_val]).float().mean().item()
                     acc_box_val = 100*(torch.round(pred_labels_val[box_mask_val]) == act_labels_val[box_mask_val]).float().mean().item()
                     overall_acc_val = 100*(torch.round(pred_labels_val) == act_labels_val).float().mean().item()
                     
@@ -123,6 +145,15 @@ class Trainer:
                         "loss": [loss_val.item()],
                         "source": ["val"],
                     })], ignore_index=True)
+
+                    # Delete variables to free up memory
+                    del act_labels_val
+                    del pred_labels_val
+                    del loss_val
+                    del box_mask_val
+                    del acc_no_box_val
+                    del acc_box_val
+                    del overall_acc_val
                     gc.collect()
                     torch.cuda.empty_cache()
 
