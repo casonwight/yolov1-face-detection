@@ -78,27 +78,13 @@ def show_images(images, all_boxes):
         plt.imshow(image)
         plt.show()
 
-if __name__=="__main__":
-    # set seed
-    torch.manual_seed(0)
-    
-    wider_train_loader, wider_val_loader = get_data_loaders(batch_size=4)
-    print(len(wider_train_loader), len(wider_val_loader))
-
-    # Extract single batch of training data using next(iter(...))
-    images, labels = next(iter(wider_train_loader))
-    print(images.shape, labels.shape)
-    print(images[0])
-
-    # Extract single batch of validation data using next(iter(...))
-    images, labels = next(iter(wider_val_loader))
-    print(images.shape, labels.shape)
-
-    # Show images
-    show_images(images, labels)
-
 
 if __name__ == "__main__":
+    import os 
+
+    print("current dir")
+    print(os.getcwd())
+
     # set seed
     torch.manual_seed(0)
     
@@ -109,6 +95,12 @@ if __name__ == "__main__":
     images, labels = next(iter(wider_train_loader))
     print(images.shape, labels.shape)
     print(images[0])
+
+    # if models/yolo_faces_model_2023-05-19.pt exists, load it
+    if os.path.exists("models/yolov1_faces_model_2023-05-19.pt"):
+        print("Loading existing model.")
+        model = torch.jit.load("models/yolov1_faces_model_2023-05-19.pt")
+        labels = model(images)
 
     # Show images
     show_images(images, labels)
