@@ -1,13 +1,20 @@
-import torch
+from data_utils import get_data_loaders
+from tqdm import tqdm
 
-a = torch.rand(10, 10)
-print(a)
 
-b = torch.tensor([[1, 2], [3, 4], [1, 2], [5, 6]])
-print(b)
+train_loader, val_loader = get_data_loaders()
 
-unique_b, inverse_index = torch.unique(b, dim=0, return_inverse=True)
-unique_b[inverse_index, :] = b
-print(unique_b)
+mean = 0.
+std = 0.
+nb_samples = 0.
+for data, _ in tqdm(train_loader):
+    batch_samples = data.size(0)
+    data = data.view(batch_samples, data.size(1), -1)
+    mean += data.mean(2).sum(0)
+    std += data.std(2).sum(0)
+    nb_samples += batch_samples
 
-print(a[unique_b[:, 0], unique_b[:, 1]])
+mean /= nb_samples
+std /= nb_samples
+
+print(mean, std)

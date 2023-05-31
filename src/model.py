@@ -16,7 +16,9 @@ class YoloV1Model(torch.nn.Module):
                 for n_in, n_out, pooling in zip(n_in, n_out, pooling_layers)])
 
         self.fc1 = torch.nn.Linear(self.grid_size * self.grid_size * 1024, 4096)
+        torch.nn.init.kaiming_uniform_(self.fc1.weight)
         self.fc2 = torch.nn.Linear(4096, self.grid_size * self.grid_size * 5) 
+        torch.nn.init.kaiming_uniform_(self.fc2.weight)
 
     def downsize_layer(self, n_in, n_out, pooling=True):
         out_layers = [
@@ -27,6 +29,11 @@ class YoloV1Model(torch.nn.Module):
         if pooling:
             out_layers.append(torch.nn.MaxPool2d(kernel_size=2, stride=2, padding=0))
         
+        # Use He initialization for convolutional layers
+        for layer in out_layers:
+            if isinstance(layer, torch.nn.Conv2d):
+                torch.nn.init.kaiming_uniform_(layer.weight)
+
         return torch.nn.Sequential(*out_layers)
 
     def forward(self, x):

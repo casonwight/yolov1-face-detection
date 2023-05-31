@@ -14,7 +14,7 @@ class WiderFaceDataset(torch.utils.data.Dataset):
     def __init__(self, root, split):
         self.img_size = 896
         self.wider_train_data = WIDERFace(root=root, split=split, download=True)
-        self.transform = transforms.Compose([Resize((self.img_size, self.img_size)), ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        self.transform = transforms.Compose([Resize((self.img_size, self.img_size)), ToTensor(), Normalize(mean=[0.4702, 0.4347, 0.4086], std=[0.2623, 0.2522, 0.2522])])
 
     def __getitem__(self, index):
         img, target = self.wider_train_data[index]
@@ -73,6 +73,12 @@ def show_images(images, all_boxes, nms_threshold=0.5, nms=False,
     max_bgr_value = 255
     bbox_color = (0, max_bgr_value, 0)
 
+    unnormalizer = transforms.Compose([ 
+        transforms.Normalize(mean = [ 0., 0., 0. ], std = [ 1/0.2623, 1/0.2522, 1/0.2522 ]),
+        transforms.Normalize(mean = [ -0.4702, -0.4347, -0.4086 ], std = [ 1., 1., 1. ]),
+    ])
+    images = unnormalizer(images)
+
     images = (images.cpu().permute(0, 2, 3, 1).numpy() * max_bgr_value).astype(np.uint8)
 
     for image, boxes in zip(images, all_boxes):
@@ -112,12 +118,6 @@ if __name__ == "__main__":
     images, labels = next(iter(wider_train_loader))
     print(images.shape, labels.shape)
     print(images[0])
-
-    # if models/yolo_faces_model_2023-05-19.pt exists, load it
-    if os.path.exists("models/yolov1_faces_model_2023-05-19.pt"):
-        print("Loading existing model.")
-        model = torch.jit.load("models/yolov1_faces_model_2023-05-19.pt")
-        labels = model(images)
 
     # Show images
     show_images(images, labels)
