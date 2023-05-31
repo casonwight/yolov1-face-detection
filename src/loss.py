@@ -11,12 +11,12 @@ class YoloV1Loss(torch.nn.Module):
 
     def forward(self, outputs, targets):
         # Get masks for grid cells with and without objects
-        obj_mask = (targets[:, :, :, 4] == 1).detach()
+        obj_mask = (targets[..., 4] == 1).detach()
         noobj_mask = torch.logical_not(obj_mask).detach()
 
-        loss_xywh = F.mse_loss(outputs[:, :, :, 0:4][obj_mask], targets[:, :, :, 0][obj_mask], reduction="sum") * self.lambda_coord
-        loss_b =  F.mse_loss(outputs[:, :, :, 4][obj_mask], targets[:, :, :, 4][obj_mask], reduction="sum") 
-        loss_no_b =  F.mse_loss(outputs[:, :, :, 4][noobj_mask], targets[:, :, :, 4][noobj_mask], reduction="sum") * self.lambda_noobj
+        loss_xywh = self.lambda_coord * F.mse_loss(outputs[..., 0:4][obj_mask], targets[..., 0:4][obj_mask], reduction="sum")
+        loss_b =  F.mse_loss(outputs[..., 4][obj_mask], targets[..., 4][obj_mask], reduction="sum") 
+        loss_no_b = self.lambda_noobj * F.mse_loss(outputs[..., 4][noobj_mask], targets[..., 4][noobj_mask], reduction="sum")
 
         # Total loss
         loss = loss_xywh + loss_b + loss_no_b
