@@ -22,6 +22,7 @@ class YoloV1Model(torch.nn.Module):
         out_layers = [
             torch.nn.Conv2d(n_in, n_out, kernel_size=3, stride=1, padding=1),
             torch.nn.BatchNorm2d(n_out),
+            torch.nn.LeakyReLU(0.1)
         ]
         if pooling:
             out_layers.append(torch.nn.MaxPool2d(kernel_size=2, stride=2, padding=0))
@@ -32,6 +33,7 @@ class YoloV1Model(torch.nn.Module):
         x = self.layers(x) 
         x = x.view(x.shape[0], -1)
         x = self.fc1(x) 
+        x = torch.relu(x)
         x = self.fc2(x) 
         x = x.view(x.shape[0], 7, 7, 5)
         x = torch.sigmoid(x)

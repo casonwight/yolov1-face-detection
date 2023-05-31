@@ -20,6 +20,7 @@ def main():
     parser.add_argument("--show_every", type=int, default=32)
     parser.add_argument("--data_root", type=str, default="data/")
     parser.add_argument("--model", type=str, default=None)
+    parser.add_argument("--batches_per_epoch", type=int, default=None)
     args = parser.parse_args()
 
     trainer = Trainer(**vars(args))

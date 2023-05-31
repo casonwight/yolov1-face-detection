@@ -22,15 +22,15 @@ class YoloV1Loss(torch.nn.Module):
         obj_mask = (targets[:, :, :, 4] == 1).detach()
         noobj_mask = torch.logical_not(obj_mask).detach()
 
-        loss1a = F.mse_loss(outputs[..., 0][obj_mask], targets[..., 0][obj_mask], reduction="sum")
-        loss1b = F.mse_loss(outputs[..., 1][obj_mask], targets[..., 1][obj_mask], reduction="sum")
-        loss2a = F.mse_loss(outputs[..., 2][obj_mask], targets[..., 2][obj_mask], reduction="sum")
-        loss2b = F.mse_loss(outputs[..., 3][obj_mask], targets[..., 3][obj_mask], reduction="sum")
-        loss3 = F.mse_loss(outputs[..., 4][obj_mask], targets[..., 4][obj_mask], reduction="sum")
-        loss4 = F.mse_loss(outputs[..., 4][noobj_mask], targets[..., 4][noobj_mask], reduction="sum")
+        loss_x = F.mse_loss(outputs[:, :, :, 0][obj_mask], targets[:, :, :, 0][obj_mask], reduction="sum") * self.lambda_coord
+        loss_y = F.mse_loss(outputs[:, :, :, 1][obj_mask], targets[:, :, :, 1][obj_mask], reduction="sum") * self.lambda_coord
+        loss_w = F.mse_loss(outputs[:, :, :, 2][obj_mask], targets[:, :, :, 2][obj_mask], reduction="sum") * self.lambda_coord
+        loss_h = F.mse_loss(outputs[:, :, :, 3][obj_mask], targets[:, :, :, 3][obj_mask], reduction="sum") * self.lambda_coord
+        loss_b =  F.mse_loss(outputs[:, :, :, 4][obj_mask], targets[:, :, :, 4][obj_mask], reduction="sum") 
+        loss_no_b =  F.mse_loss(outputs[:, :, :, 4][noobj_mask], targets[:, :, :, 4][noobj_mask], reduction="sum") * self.lambda_noobj
 
         # Total loss
-        loss = self.lambda_coord * (loss1a + loss1b + loss2a + loss2b) + loss3 + self.lambda_noobj * loss4
+        loss = loss_x + loss_y + loss_w + loss_h + loss_b + loss_no_b
 
         return loss
     

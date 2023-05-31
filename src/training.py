@@ -30,7 +30,8 @@ class Trainer:
             "momentum": 0.9,
             "weight_decay": 0.0005,
             "scheduler_step_size": 1,
-            "scheduler_gamma": 0.1
+            "scheduler_gamma": 0.1,
+            "batches_per_epoch": None,
         }
 
         self.__dict__.update(kwargs)
@@ -52,7 +53,7 @@ class Trainer:
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.scheduler_step_size, gamma=self.scheduler_gamma)
         self.criterion = YoloV1Loss(lambda_coord=self.lambda_coord, lambda_noobj=self.lambda_noobj)
 
-        self.train_loader, self.val_loader = get_data_loaders(self.data_root, batch_size=self.batch_size)
+        self.train_loader, self.val_loader = get_data_loaders(self.data_root, batch_size=self.batch_size, batches_per_epoch=self.batches_per_epoch)
 
         self.results = pd.DataFrame(columns=["i", "epoch", "batch", "acc_box", "acc_no_box", "acc_overall", "loss", "source"])
 

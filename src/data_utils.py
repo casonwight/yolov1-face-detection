@@ -1,8 +1,8 @@
 from torchvision.datasets import WIDERFace
 from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor, Resize
-import torchvision
 import torchvision.transforms as transforms
+import torchvision
 import torch.nn.functional as F
 import torch
 import matplotlib.pyplot as plt
@@ -10,7 +10,7 @@ import numpy as np
 import cv2
 
 
-class WiderFaceDataset:
+class WiderFaceDataset(torch.utils.data.Dataset):
     def __init__(self, root, split):
         self.img_size = 896
         self.wider_train_data = WIDERFace(root=root, split=split, download=True)
@@ -53,9 +53,14 @@ class WiderFaceDataset:
         return len(self.wider_train_data)
 
 
-def get_data_loaders(root="data/", batch_size=32):
+def get_data_loaders(root="data/", batch_size=32, batches_per_epoch=None):
     wider_train_data = WiderFaceDataset(root=root, split="train")
     wider_val_data = WiderFaceDataset(root=root, split="val")
+
+    if batches_per_epoch is not None:
+        print(f"Limiting to {batches_per_epoch:,.0f} batch{'' if batches_per_epoch == 1 else 'es'} per epoch.")
+        wider_train_data = torch.utils.data.Subset(wider_train_data, range(batches_per_epoch * batch_size))
+        wider_val_data = torch.utils.data.Subset(wider_val_data, range(batches_per_epoch * batch_size))
 
     wider_train_loader = DataLoader(wider_train_data, batch_size=batch_size, shuffle=True)
     wider_val_loader = DataLoader(wider_val_data, batch_size=batch_size, shuffle=True)
@@ -63,18 +68,30 @@ def get_data_loaders(root="data/", batch_size=32):
     return wider_train_loader, wider_val_loader
 
 
-def show_images(images, all_boxes):
-    images = (images.cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)
+def show_images(images, all_boxes, nms_threshold=0.5, nms=False,
+                img_w=896, img_h=896):
+    max_bgr_value = 255
+    bbox_color = (0, max_bgr_value, 0)
+
+    images = (images.cpu().permute(0, 2, 3, 1).numpy() * max_bgr_value).astype(np.uint8)
 
     for image, boxes in zip(images, all_boxes):
+
+        if nms:
+            # Non-maximum suppression
+            boxes_reshaped = boxes.reshape(-1, 5)
+            non_suppressed_boxes = torchvision.ops.nms(boxes_reshaped[:, :4], boxes_reshaped[:, 4], iou_threshold=nms_threshold)
+            boxes_reshaped = boxes_reshaped[non_suppressed_boxes]
+            boxes = boxes_reshaped.reshape(boxes.shape)
+
         for grid_row in range(boxes.shape[0]):
             for grid_col in range(boxes.shape[1]):
-                if boxes[grid_row, grid_col, 4] > .5:
-                    x = int(boxes[grid_row, grid_col, 0] * 896)
-                    y = int(boxes[grid_row, grid_col, 1] * 896)
-                    w = int(boxes[grid_row, grid_col, 2] **2 * 896)
-                    h = int(boxes[grid_row, grid_col, 3] **2 * 896)
-                    image = cv2.rectangle(image.copy(), (x, y), (x + w, y + h), (0, 255, 0), 2)
+                if boxes[grid_row, grid_col, 4]:
+                    x = int(boxes[grid_row, grid_col, 0] * img_w)
+                    y = int(boxes[grid_row, grid_col, 1] * img_h)
+                    w = int(boxes[grid_row, grid_col, 2] **2 * img_w)
+                    h = int(boxes[grid_row, grid_col, 3] **2 * img_h)
+                    image = cv2.rectangle(image.copy(), (x, y), (x + w, y + h), bbox_color, 2)
         plt.imshow(image)
         plt.show()
 
