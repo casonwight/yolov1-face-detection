@@ -1,6 +1,6 @@
 from torchvision.datasets import WIDERFace
 from torch.utils.data import DataLoader
-from torchvision.transforms import ToTensor, Resize
+from torchvision.transforms import ToTensor, Resize, Normalize
 import torchvision.transforms as transforms
 import torchvision
 import torch.nn.functional as F
@@ -14,7 +14,7 @@ class WiderFaceDataset(torch.utils.data.Dataset):
     def __init__(self, root, split):
         self.img_size = 896
         self.wider_train_data = WIDERFace(root=root, split=split, download=True)
-        self.transform = transforms.Compose([Resize((self.img_size, self.img_size)), ToTensor()])
+        self.transform = transforms.Compose([Resize((self.img_size, self.img_size)), ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     def __getitem__(self, index):
         img, target = self.wider_train_data[index]
